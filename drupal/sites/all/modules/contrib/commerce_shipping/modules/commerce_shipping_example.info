@@ -1,0 +1,17 @@
+; $Id$
+name = Shipping Method Example
+description = Provides an example shipping method for testing and development.
+package = Commerce
+dependencies[] = commerce
+dependencies[] = commerce_shipping
+core = 7.x
+
+; Base module files
+files[] = commerce_shipping_example.module
+
+; Information added by drupal.org packaging script on 2011-04-30
+version = "7.x-1.0-beta2"
+core = "7.x"
+project = "commerce_shipping"
+datestamp = "1304181722"
+

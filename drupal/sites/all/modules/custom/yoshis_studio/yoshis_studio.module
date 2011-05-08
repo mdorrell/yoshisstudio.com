@@ -1,0 +1,56 @@
+<?php
+
+/**
+ * Implements hook_form_alter().
+ */
+function yoshis_studio_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'commerce_line_item_views_form_commerce_cart_form_default') {
+    foreach ($form['edit_quantity'] as $id => $line) {
+      if (is_numeric($id)) {
+        $form['edit_quantity'][$id]['#disabled'] = TRUE;
+      }  
+    }
+
+  }
+  elseif ($form_id == 'commerce_checkout_form_checkout') {
+   // $form['#validate'][] = 'yoshis_studio_checkout_form_validate';
+  }
+}
+
+/**
+ * Override or insert variables into the page template.
+ */
+function yoshis_studio_preprocess_page(&$vars) {
+ $element = array(
+    '#tag' => 'meta',
+    '#attributes' => array(
+      'name' => 'description',
+      'content' => 'Handmade Japanese dolls, also known as Ningyo, done in the Komako style. All of our dolls are imported from Japan, and handmade with Washi Paper from Kyoto. Our dolls make great gifts for any occasion.',
+    ),
+  );
+  drupal_add_html_head($element, 'description');
+
+ $element = array(
+    '#tag' => 'meta',
+    '#attributes' => array(
+      'name' => 'keywords',
+      'content' => "Japanese dolls, paper dolls, hina, Girl's Day, Boy's Day, dolls, ningyo, ningyo dolls, Samurai, Geisha, washi paper, Hina Matsuri, Edo dolls, Edo, kimono, gosho, children's day, kodomo no hi, Doll's Festival, Japanese art, washi ningyo",
+    ),
+  );
+  drupal_add_html_head($element, 'keywords');
+
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function yoshis_studio_theme() {
+  $theme = array();
+
+  // webform.submissions.inc
+  $theme['inline_product'] = array(
+      'variables' => array('nid' => NULL, 'div_class' => NULL),
+      'template' => 'templates/inline-product',
+  );
+  return $theme;
+}

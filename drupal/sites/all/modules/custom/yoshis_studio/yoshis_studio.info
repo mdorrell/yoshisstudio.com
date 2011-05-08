@@ -1,0 +1,7 @@
+; $Id: $
+name = Yoshis Studio
+description = Custom module for Yoshi's Studio
+core = 7.x
+package = Yoshis Studio
+configure = admin/config/content/yoshis_studio
+

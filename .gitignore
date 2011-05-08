@@ -1,0 +1,7 @@
+drupal/sites/default/files
+drupal/js
+drupal/css
+drupal/sites/default/settings.php
+Thumbs.db
+.DS_Store
+.settings

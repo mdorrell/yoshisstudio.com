@@ -1,0 +1,27 @@
+; $Id$
+name = Shipping
+description = Implement core shipping features for Drupal commerce.
+package = Commerce
+dependencies[] = commerce
+dependencies[] = commerce_line_item
+dependencies[] = list
+dependencies[] = rules
+
+core = 7.x
+
+; Base module files
+files[] = commerce_shipping.module
+
+; Module includes
+files[] = commerce_shipping.rules.inc
+files[] = commerce_shipping.rules_defaults.inc
+
+; Views include
+files[] = includes/views/commerce_shipping.views.inc
+
+; Information added by drupal.org packaging script on 2011-04-30
+version = "7.x-1.0-beta2"
+core = "7.x"
+project = "commerce_shipping"
+datestamp = "1304181722"
+

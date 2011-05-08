@@ -1,0 +1,416 @@
+<?php
+// $Id: addressfield.module,v 1.3 2010/10/09 03:15:44 rszrama Exp $
+
+/**
+ * @file
+ * Defines a field for attaching country-specific addresses to entities.
+ */
+
+/**
+ * Implementation of hook_field_info()
+ */
+function addressfield_field_info() {
+  $fields = array();
+
+  $fields['addressfield'] = array(
+    'label' => t('Postal address'),
+    'description' => t('A field type used for storing postal addresses according the xNAL standard.'),
+    'default_widget' => 'addressfield_standard',
+    'default_formatter' => 'addressfield_default',
+  );
+
+  return $fields;
+}
+
+/**
+ * Implementation of hook_field_schema()
+ */
+function addressfield_field_schema() {
+  $columns = array(
+    'country' => array(
+      'description' => 'Two letter ISO country code of this address.',
+      'type' => 'varchar',
+      'length' => 2,
+      'not null' => FALSE,
+      'default' => '',
+    ),
+    'administrative_area' => array(
+      'description' => 'The dministrative area of this address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'default' => '',
+      'not null' => FALSE,
+    ),
+    'sub_administrative_area' => array(
+      'description' => 'The sub administrative area of this address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'default' => '',
+      'not null' => FALSE,
+    ),
+    'locality' => array(
+      'description' => 'The locality of this address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'default' => '',
+      'not null' => FALSE,
+    ),
+    'dependent_locality' => array(
+      'description' => 'The dependent locality of this address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'default' => '',
+      'not null' => FALSE,
+    ),
+    'postal_code' => array(
+      'description' => 'The postal code of this address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'default' => '',
+      'not null' => FALSE,
+    ),
+    'thoroughfare' => array(
+      'description' => 'The thoroughfare of this address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'default' => '',
+      'not null' => FALSE,
+    ),
+    'premise' => array(
+      'description' => 'The premise of this address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'default' => '',
+      'not null' => FALSE,
+    ),
+    'sub_premise' => array(
+      'description' => 'The sub_premise of this address.',
+      'type' => 'varchar',
+      'length' => 255,
+      'default' => '',
+      'not null' => FALSE,
+    ),
+    'data' => array(
+      'description' => 'Additional data for this address.',
+      'type' => 'text',
+      'size' => 'big',
+      'not null' => FALSE,
+      'serialize' => TRUE,
+    ),
+  );
+
+  return array(
+    'columns' => $columns,
+    // TODO Add indexes.
+  );
+}
+
+/**
+ * Implementation of hook_field_is_empty().
+ */
+function addressfield_field_is_empty($item, $field) {
+  return empty($item['country']);
+}
+
+/**
+ * Implementation of hook_field_widget_info()
+ */
+function addressfield_field_widget_info() {
+  $widgets = array();
+
+  $widgets['addressfield_standard'] = array(
+    'label' => t('Dynamic address form'),
+    'field types' => array('addressfield'),
+    'settings' => array(
+      'available_countries' => array(),
+      'default_country' => variable_get('site_default_country', 'US'),
+    ),
+  );
+
+  return $widgets;
+}
+
+/**
+ * Build a dummy address array.
+ */
+function addressfield_default_values($settings) {
+  return array(
+    'country' => $settings['default_country'],
+    'administrative_area' => '',
+    'sub_administrative_area' => '',
+    'locality' => '',
+    'dependent_locality' => '',
+    'postal_code' => '',
+    'thoroughfare' => '',
+    'premise' => '',
+    'sub_premise' => '',
+    'data' => array(),
+  );
+}
+
+/**
+ * Implementation of hook_field_widget_form()
+ */
+function addressfield_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $settings = $instance['widget']['settings'];
+
+  // Necessary for country_get_list(); not using include_once for performance.
+  if (!function_exists('country_get_list')) {
+    include DRUPAL_ROOT . '/includes/locale.inc';
+  }
+
+  // Generate a specific key used to identify this element to restore a default
+  // value upon AJAX submission regardless of where this element is in the
+  // $form array.
+  $element_key = implode('|', array($element['#entity_type'], $element['#bundle'], $element['#field_name'], $element['#language'], $element['#delta']));
+
+  // Store the key in the element array as a value so it can be easily retrieved
+  // in context in the $form_state['values'] array in the element validator.
+  $element['element_key'] = array(
+    '#type' => 'value',
+    '#value' => $element_key,
+  );
+
+  // Get the default address used to build the widget form elements, looking
+  // first in the form state, then in the stored value for the field, and then
+  // in the default values of the instance.
+  $address = array();
+
+  if (!empty($form_state['addressfield'][$element_key])) {
+    // Use the value from the form_state if available.
+    $address = $form_state['addressfield'][$element_key];
+  }
+  elseif (!empty($items[$delta]['country'])) {
+    // Else use the saved value for the field.
+    $address = $items[$delta];
+  }
+
+  // Merge in default values to provide a value for every expected array key.
+  $address += addressfield_default_values($settings);
+
+  // Add the form elements for the standard widget, which includes a country
+  // select list at the top that reloads the available address elements when the
+  // country is changed.
+  if ($instance['widget']['type'] == 'addressfield_standard') {
+    // Provide a wrapper ID for AJAX replacement based on country selection.
+    $wrapper_id = drupal_html_class($field['field_name']) . '-addressfield-wrapper';
+
+    $element['#prefix'] = '<div id="' . $wrapper_id . '">';
+    $element['#suffix'] = '</div>';
+
+    // Build an options array of available countries to choose from.
+    $options = country_get_list();
+
+    if (!empty($settings['available_countries'])) {
+      $options = array_intersect_key($options, $settings['available_countries']);
+    }
+
+    // Add an AJAX enabled country select list.
+    $element['country'] = array(
+      '#type' => 'select',
+      '#title' => t('Country'),
+      '#options' => $options,
+      '#default_value' => $address['country'],
+      '#required' => TRUE,
+      '#element_validate' => array('addressfield_standard_widget_validate'),
+
+      '#ajax' => array(
+        'callback' => 'addressfield_standard_widget_refresh',
+        'wrapper' => $wrapper_id,
+        'method' => 'replace',
+      ),
+
+      // Don't validate any element when the country is changed.
+      '#limit_validation_errors' => array(),
+    );
+
+    $element += addressfield_edit_form($address, $field, $instance, $langcode, $items, $delta, $element);
+  }
+
+  return $element;
+}
+
+/**
+ * Element validate callback: rebuilds the form on country change and stores the
+ *   current address value in the $form_state for retrieval on rebuild.
+ */
+function addressfield_standard_widget_validate($element, &$form_state) {
+  // If the country was changed, rebuild the form.
+  if ($element['#default_value'] != $element['#value']) {
+    $form_state['rebuild'] = TRUE;
+  }
+
+  // Search through the form values to find the current address.
+  $address = $form_state['values'];
+
+  $parents = $element['#parents'];
+  array_pop($parents);
+
+  foreach ($parents as $key) {
+    $address = $address[$key];
+  }
+
+  // Store the present address values in the form state for retrieval by the
+  // widget form regardless of where the widget sits in the $form array.
+  $form_state['addressfield'][$address['element_key']] = array_diff_key($address, array('element_key' => ''));
+}
+
+/**
+ * Ajax callback in response to a change of country in an address field.
+ *
+ * The only thing we have to do is to find the proper element to render.
+ */
+function addressfield_standard_widget_refresh($form, $form_state) {
+  // The target element is one element below the triggering country selector.
+  $array_parents = $form_state['triggering_element']['#array_parents'];
+  array_pop($array_parents);
+
+  // Iterate over the form parents to find the element.
+  $element = $form;
+  foreach ($array_parents as $name) {
+    $element = &$element[$name];
+  }
+
+  // Return the address block.
+  return $element;
+}
+
+/**
+ * Return a form snippet for editing an address in a given country.
+ *
+ * @param $country
+ *   The country of the address.
+ * @param array $address
+ *   An address array.
+ * @return
+ *   A form snippet.
+ */
+function addressfield_edit_form(array $address, $field, $instance, $langcode, $items, $delta, $element) {
+  $form_controller = addressfield_get_form_controller($address);
+
+  // Build the form from the controller.
+  $form = $form_controller->form($address, $field, $instance, $langcode, $items, $delta, $element);
+
+  return $form;
+}
+
+/**
+ * Implementation of hook_field_widget_settings_form()
+ */
+function addressfield_field_widget_settings_form($field, $instance) {
+  // Necessary for country_get_list(); not using include_once for performance.
+  if (!function_exists('country_get_list')) {
+    include DRUPAL_ROOT . '/includes/locale.inc';
+  }
+
+  $widget = $instance['widget'];
+  $settings = $widget['settings'];
+
+  if ($widget['type'] == 'addressfield_standard') {
+    $form['default_country'] = array(
+      '#type' => 'select',
+      '#title' => t('Default country'),
+      '#options' => country_get_list(),
+      '#default_value' => $settings['default_country'],
+    );
+
+    $form['available_countries'] = array(
+      '#type' => 'select',
+      '#multiple' => TRUE,
+      '#title' => t('Available countries'),
+      '#description' => t('If no countries are selected, all countries will be available.'),
+      '#options' => country_get_list(),
+      '#default_value' => $settings['available_countries'],
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Get the controller for a specific action on an address.
+ *
+ * @param $address
+ *   The address array.
+ * @return
+ *    A controller object.
+ */
+function addressfield_get_form_controller(array $address) {
+  static $mapping, $controller_objects = array();
+
+  if (!isset($mapping)) {
+    $mapping = addressfield_default_mapping();
+    drupal_alter('addressfield_mapping', $mapping);
+  }
+
+  if (isset($mapping[strtoupper($address['country'])])) {
+    $controller = $mapping[$address['country']];
+  }
+  else {
+    $controller = $mapping['default'];
+  }
+
+  if (isset($controller)) {
+    if (!isset($controller_objects[$controller])) {
+      $controller_objects[$controller] = new $controller();
+    }
+    return $controller_objects[$controller];
+  }
+}
+
+/**
+ * Default mapping of address forms to countries.
+ */
+function addressfield_default_mapping() {
+  return array(
+    'default' => 'AddressFieldForm_default',
+    'US' => 'AddressFieldForm_us',
+    // TODO: complete the mapping.
+  );
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function addressfield_field_formatter_info() {
+  return array(
+    'addressfield_default' => array(
+      'label' => t('Default'),
+      'field types' => array('addressfield'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function addressfield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+
+  switch ($display['type']) {
+    case 'addressfield_default':
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array(
+          '#theme' => array('addressfield_formatter__' . $item['country'], 'addressfield_formatter'),
+          '#address' => $item,
+        );
+      }
+      break;
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function addressfield_theme() {
+  $path = drupal_get_path('module', 'addressfield') . '/theme';
+  $templates['addressfield_formatter'] = array(
+    'variables' => array('address' => NULL),
+    'template' => 'addressfield-formatter',
+    'path' => $path,
+  );
+  $templates += drupal_find_theme_templates($templates, '.tpl.php', $path);
+  return $templates;
+}
