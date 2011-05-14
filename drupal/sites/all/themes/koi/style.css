@@ -1342,3 +1342,12 @@ input[disabled="disabled"] {
   display:none;
 }
 
+
+.form-item-attributes-field-origami-color label {
+  font-weight:bold;
+  color: 	#453320;
+  font-size:1em;
+}
+.form-item-attributes-field-origami-color select {
+  width:118px;
+}
