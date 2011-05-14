@@ -1032,18 +1032,20 @@ class views_plugin_query_default extends views_plugin_query {
     $has_condition = FALSE;
     $main_group = $this->group_operator == 'OR' ? db_or() : db_and();
     foreach ($this->$where as $group => $info) {
-      $sub_group = $info['type'] == 'OR' ? db_or() : db_and();
-      foreach ($info['conditions'] as $key => $clause) {
-        if ($clause['operator'] == 'formula') {
-          $has_condition = TRUE;
-          $sub_group->where($clause['field'], $clause['value']);
+      if (!empty($info['conditions'])) {
+        $sub_group = $info['type'] == 'OR' ? db_or() : db_and();
+        foreach ($info['conditions'] as $key => $clause) {
+          if ($clause['operator'] == 'formula') {
+            $has_condition = TRUE;
+            $sub_group->where($clause['field'], $clause['value']);
+          }
+          else {
+            $has_condition = TRUE;
+            $sub_group->condition($clause['field'], $clause['value'], $clause['operator']);
+          }
         }
-        else {
-          $has_condition = TRUE;
-          $sub_group->condition($clause['field'], $clause['value'], $clause['operator']);
-        }
+        $main_group->condition($sub_group);
       }
-      $main_group->condition($sub_group);
     }
     if ($has_condition) {
       return $main_group;
@@ -1130,6 +1132,7 @@ class views_plugin_query_default extends views_plugin_query {
     if (empty($this->no_distinct) && $this->distinct && !empty($this->fields)) {
       $base_field_alias = $this->add_field($this->base_table, $this->base_field);
       $this->add_groupby($base_field_alias);
+      $distinct = TRUE;
     }
 
     /**
@@ -1168,6 +1171,10 @@ class views_plugin_query_default extends views_plugin_query {
     // Go ahead and build the query.
     // db_select doesn't support to specify the key, so use getConnection directly.
     $query = Database::getConnection($target, $key)->select($this->base_table, $this->base_table, $options)->addTag('views');
+
+    if (!empty($distinct)) {
+      $query->distinct();
+    }
 
     $joins = $where = $having = $orderby = $groupby = '';
     $fields = $distinct = array();
@@ -1316,21 +1323,22 @@ class views_plugin_query_default extends views_plugin_query {
 
       $start = microtime(TRUE);
 
-      if ($this->pager->use_count_query() || !empty($view->get_total_rows)) {
-        $this->pager->execute_count_query($count_query);
-      }
-
-      // Let the pager modify the query to add limits.
-      $this->pager->pre_execute($query);
-
-      if (!empty($this->limit) || !empty($this->offset)) {
-        // We can't have an offset without a limit, so provide a very large limit instead.
-        $limit  = intval(!empty($this->limit) ? $this->limit : 999999);
-        $offset = intval(!empty($this->offset) ? $this->offset : 0);
-        $query->range($offset, $limit);
-      }
 
       try {
+        if ($this->pager->use_count_query() || !empty($view->get_total_rows)) {
+          $this->pager->execute_count_query($count_query);
+        }
+
+        // Let the pager modify the query to add limits.
+        $this->pager->pre_execute($query);
+
+        if (!empty($this->limit) || !empty($this->offset)) {
+          // We can't have an offset without a limit, so provide a very large limit instead.
+          $limit  = intval(!empty($this->limit) ? $this->limit : 999999);
+          $offset = intval(!empty($this->offset) ? $this->offset : 0);
+          $query->range($offset, $limit);
+        }
+
         $result = $query->execute();
 
         $view->result = array();
@@ -1346,7 +1354,13 @@ class views_plugin_query_default extends views_plugin_query {
       }
       catch (Exception $e) {
         $view->result = array();
-        debug('Exception: ' . $e->getMessage());
+        if (!empty($view->live_preview)) {
+          drupal_set_message(time());
+          drupal_set_message($e->getMessage(), 'error');
+        }
+        else {
+          debug('Exception: ' . $e->getMessage());
+        }
       }
 
     }
@@ -1370,7 +1384,17 @@ class views_plugin_query_default extends views_plugin_query {
         'method' => 'views_query_default_aggregation_method_simple',
         'handler' => array(
           'argument' => 'views_handler_argument_group_by_numeric',
-          'field' => 'views_handler_field_group_by_numeric',
+          'field' => 'views_handler_field_numeric',
+          'filter' => 'views_handler_filter_group_by_numeric',
+          'sort' => 'views_handler_sort_group_by_numeric',
+        ),
+      ),
+      'count_distinct' => array(
+        'title' => t('Count DISTINCT'),
+        'method' => 'views_query_default_aggregation_method_distinct',
+        'handler' => array(
+          'argument' => 'views_handler_argument_group_by_numeric',
+          'field' => 'views_handler_field_numeric',
           'filter' => 'views_handler_filter_group_by_numeric',
           'sort' => 'views_handler_sort_group_by_numeric',
         ),
@@ -1380,7 +1404,6 @@ class views_plugin_query_default extends views_plugin_query {
         'method' => 'views_query_default_aggregation_method_simple',
         'handler' => array(
           'argument' => 'views_handler_argument_group_by_numeric',
-          'field' => 'views_handler_field_group_by_numeric',
           'filter' => 'views_handler_filter_group_by_numeric',
           'sort' => 'views_handler_sort_group_by_numeric',
         ),
@@ -1390,7 +1413,6 @@ class views_plugin_query_default extends views_plugin_query {
         'method' => 'views_query_default_aggregation_method_simple',
         'handler' => array(
           'argument' => 'views_handler_argument_group_by_numeric',
-          'field' => 'views_handler_field_group_by_numeric',
           'filter' => 'views_handler_filter_group_by_numeric',
           'sort' => 'views_handler_sort_group_by_numeric',
         ),
@@ -1400,7 +1422,6 @@ class views_plugin_query_default extends views_plugin_query {
         'method' => 'views_query_default_aggregation_method_simple',
         'handler' => array(
           'argument' => 'views_handler_argument_group_by_numeric',
-          'field' => 'views_handler_field_group_by_numeric',
           'filter' => 'views_handler_filter_group_by_numeric',
           'sort' => 'views_handler_sort_group_by_numeric',
         ),
@@ -1410,7 +1431,6 @@ class views_plugin_query_default extends views_plugin_query {
         'method' => 'views_query_default_aggregation_method_simple',
         'handler' => array(
           'argument' => 'views_handler_argument_group_by_numeric',
-          'field' => 'views_handler_field_group_by_numeric',
           'filter' => 'views_handler_filter_group_by_numeric',
           'sort' => 'views_handler_sort_group_by_numeric',
         ),
@@ -1421,4 +1441,9 @@ class views_plugin_query_default extends views_plugin_query {
 
 function views_query_default_aggregation_method_simple($group_type, $field) {
   return strtoupper($group_type) . '(' . $field . ')';
+}
+
+function views_query_default_aggregation_method_distinct($group_type, $field) {
+  $group_type = str_replace('_distinct', '', $group_type);
+  return strtoupper($group_type) . '(DISTINCT ' . $field . ')';
 }
