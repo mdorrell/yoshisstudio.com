@@ -18,6 +18,16 @@ function yoshis_studio_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Override or insert variables into the html template.
+ */
+function yoshis_studio_preprocess_html(&$vars) {
+  $arg = arg();
+  if ($arg[0] == 'products') {
+    $vars['head_title'] = "View our Washi Ningyo, Japanese paper dolls";
+  }
+}
+
+/**
  * Override or insert variables into the page template.
  */
 function yoshis_studio_preprocess_page(&$vars) {
@@ -25,7 +35,7 @@ function yoshis_studio_preprocess_page(&$vars) {
     '#tag' => 'meta',
     '#attributes' => array(
       'name' => 'description',
-      'content' => 'Handmade Japanese dolls, also known as Ningyo, done in the Komako style. All of our dolls are imported from Japan, and handmade with Washi Paper from Kyoto. Our dolls make great gifts for any occasion.',
+      'content' => 'Japanese paper dolls, also known as Washi ningyo, done in the Komako style. All of our Japanese paper dolls are imported from Japan, and handmade with Washi Paper from Kyoto. Our Japanese paper dolls make great gifts for any occasion.',
     ),
   );
   drupal_add_html_head($element, 'description');
@@ -34,7 +44,7 @@ function yoshis_studio_preprocess_page(&$vars) {
     '#tag' => 'meta',
     '#attributes' => array(
       'name' => 'keywords',
-      'content' => "Japanese dolls, paper dolls, hina, Girl's Day, Boy's Day, dolls, ningyo, ningyo dolls, Samurai, Geisha, washi paper, Hina Matsuri, Edo dolls, Edo, kimono, gosho, children's day, kodomo no hi, Doll's Festival, Japanese art, washi ningyo",
+      'content' => "Japanese dolls, Japanese paper dolls, paper dolls, hina, Girl's Day, Boy's Day, dolls, ningyo, ningyo dolls, Samurai, Geisha, washi paper, Hina Matsuri, Edo dolls, Edo, kimono, gosho, children's day, kodomo no hi, Doll's Festival, Japanese art, washi ningyo",
     ),
   );
   drupal_add_html_head($element, 'keywords');
@@ -54,3 +64,4 @@ function yoshis_studio_theme() {
   );
   return $theme;
 }
+
