@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Paper Dolls feature.
+ */
+
+include_once('paper_dolls.features.inc');
