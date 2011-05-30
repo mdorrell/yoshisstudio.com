@@ -25,6 +25,15 @@ function yoshis_studio_preprocess_html(&$vars) {
   if ($arg[0] == 'products') {
     $vars['head_title'] = "View our Washi Ningyo, Japanese paper dolls";
   }
+
+  if ($arg[0] == 'node' && is_numeric($arg[1]) && empty($arg[2])) {
+    $node = node_load($arg[1]);
+    
+    if (!empty($node->field_page_title['und'][0]['safe_value'])) {
+      $vars['head_title'] = $node->field_page_title['und'][0]['safe_value'];
+    }
+    
+  }
 }
 
 /**

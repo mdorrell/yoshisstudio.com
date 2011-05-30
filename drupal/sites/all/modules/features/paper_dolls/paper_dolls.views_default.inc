@@ -111,7 +111,7 @@ function paper_dolls_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Products';
+  $handler->display->display_options['title'] = 'Japanese Paper Dolls';
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
@@ -130,7 +130,7 @@ function paper_dolls_views_default_views() {
   $handler->display->display_options['header']['area']['empty'] = FALSE;
   $handler->display->display_options['header']['area']['content'] = '<div class="tabs">
 <ul class="tabs">
-<li class="active"><a href="/products">Available</a></li><li><a href="/products/archive">Archived</a></li>
+<li class="active"><a href="/japanese-paper-dolls">Available</a></li><li><a href="/japanese-paper-dolls/archive">Archived</a></li>
 </ul>
 </div>
 These products are available now.';
@@ -204,7 +204,7 @@ These products are available now.';
   /* Display: Archived Products */
   $handler = $view->new_display('page', 'Archived Products', 'page_1');
   $handler->display->display_options['defaults']['title'] = FALSE;
-  $handler->display->display_options['title'] = 'Products';
+  $handler->display->display_options['title'] = 'Japanese Paper Dolls';
   $handler->display->display_options['defaults']['header'] = FALSE;
   /* Header: Global: Text area */
   $handler->display->display_options['header']['area']['id'] = 'area';
@@ -239,14 +239,14 @@ These products are no longer available. Please <a href="/contact">contact us</a>
   $handler->display->display_options['filters']['status_1']['field'] = 'status';
   $handler->display->display_options['filters']['status_1']['relationship'] = 'field_product_reference_product_id';
   $handler->display->display_options['filters']['status_1']['value'] = '0';
-  $handler->display->display_options['path'] = 'products/archive';
+  $handler->display->display_options['path'] = 'japanese-paper-dolls/archive';
   $handler->display->display_options['menu']['type'] = 'tab';
   $handler->display->display_options['menu']['title'] = 'Archived';
   $handler->display->display_options['menu']['weight'] = '0';
   $handler->display->display_options['menu']['name'] = 'main-menu';
   $translatables['product_display_list'] = array(
     t('Master'),
-    t('Products'),
+    t('Japanese Paper Dolls'),
     t('more'),
     t('Apply'),
     t('Reset'),
@@ -258,7 +258,7 @@ These products are no longer available. Please <a href="/contact">contact us</a>
     t('Offset'),
     t('<div class="tabs">
 <ul class="tabs">
-<li class="active"><a href="/products">Available</a></li><li><a href="/products/archive">Archived</a></li>
+<li class="active"><a href="/japanese-paper-dolls">Available</a></li><li><a href="/japanese-paper-dolls/archive">Archived</a></li>
 </ul>
 </div>
 These products are available now.'),
