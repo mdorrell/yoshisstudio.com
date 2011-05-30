@@ -190,7 +190,7 @@
 #   'driver' => 'mysql',
 #   'database' => 'yoshisst_yoshi',
 #   'username' => 'yoshisst',
-#   'password' => 'Bankoo12!',
+#   'password' => 'Nirvana1!',
 #   'host' => 'localhost',
 #   'prefix' => '',
 # );
