@@ -8,7 +8,7 @@ function yoshis_studio_form_alter(&$form, &$form_state, $form_id) {
     foreach ($form['edit_quantity'] as $id => $line) {
       if (is_numeric($id)) {
         $form['edit_quantity'][$id]['#disabled'] = TRUE;
-      }  
+      }
     }
 
   }
@@ -28,11 +28,11 @@ function yoshis_studio_preprocess_html(&$vars) {
 
   if ($arg[0] == 'node' && is_numeric($arg[1]) && empty($arg[2])) {
     $node = node_load($arg[1]);
-    
+
     if (!empty($node->field_page_title['und'][0]['safe_value'])) {
       $vars['head_title'] = $node->field_page_title['und'][0]['safe_value'];
     }
-    
+
   }
 }
 
@@ -44,7 +44,7 @@ function yoshis_studio_preprocess_page(&$vars) {
     '#tag' => 'meta',
     '#attributes' => array(
       'name' => 'description',
-      'content' => 'Japanese paper dolls, also known as Washi ningyo, done in the Komako style. All of our Japanese paper dolls are imported from Japan, and handmade with Washi Paper from Kyoto. Our Japanese paper dolls make great gifts for any occasion.',
+      'content' => 'Japanese paper dolls, also known as Washi ningyo. All of our Japanese paper dolls are imported from Japan, and handmade with Washi Paper from Kyoto. Our Japanese paper dolls make great gifts for any occasion.',
     ),
   );
   drupal_add_html_head($element, 'description');
